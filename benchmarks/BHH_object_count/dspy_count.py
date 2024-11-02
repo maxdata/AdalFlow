@@ -1,5 +1,5 @@
 import dspy
-from use_cases.question_answering.bhh_object_count.data import _parse_integer_answer
+from use_cases.question_answering.bbh.data import _parse_integer_answer
 
 
 turbo = dspy.OpenAI(model="gpt-3.5-turbo")

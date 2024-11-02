@@ -4,6 +4,7 @@ import dspy
 from dspy import Example
 
 from benchmarks.BHH_object_count.dspy_count import ObjectCount
+from use_cases.question_answering.bbh.data import load_datasets
 
 
 def validate_exact_match(example, pred, trace=None):
@@ -14,8 +15,7 @@ def validate_exact_match(example, pred, trace=None):
     return acc
 
 
-def load_datasets(max_samples=10):
-    from use_cases.question_answering.bhh_object_count.data import load_datasets
+def load_datasets(max_samples=10):   
 
     trainset, valset, testset = load_datasets(max_samples=max_samples)
     # dspy requires us to package the dataset to Example objects and specify the inputs
