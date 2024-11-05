@@ -1,6 +1,13 @@
+#!/usr/bin/env python
+# coding: utf-8
+
+
+
 from adalflow.components.agent import ReActAgent
 from adalflow.core import Generator, ModelClientType, ModelClient
-from adalflow.utils import setup_env
+from adalflow.utils import setup_env, get_logger
+
+# get_logger(level="DEBUG")
 
 setup_env()
 
@@ -13,7 +20,7 @@ def multiply(a: int, b: int) -> int:
     return a * b
 
 
-def add(a: int, b: int) -> int:
+async def add(a: int, b: int) -> int:
     """
     Add two numbers.
     """
@@ -40,7 +47,7 @@ gpt_model_kwargs = {
 def test_react_agent(model_client: ModelClient, model_kwargs: dict):
     tools = [multiply, add, divide]
     queries = [
-        "What is the capital of France? and what is 465 times 321 then add 95297 and then divide by 13.2?",
+        # "What is the capital of France? and what is 465 times 321 then add 95297 and then divide by 13.2?",
         "Give me 5 words rhyming with cool, and make a 4-sentence poem using them",
     ]
     # define a generator without tools for comparison
@@ -106,12 +113,49 @@ def test_react_agent_use_examples(model_client: ModelClient, model_kwargs: dict)
 
 
 if __name__ == "__main__":
-    from adalflow.utils import get_logger
-
-    get_logger(level="DEBUG")
-
     test_react_agent(ModelClientType.GROQ(), llama3_model_kwargs)
     test_react_agent(ModelClientType.OPENAI(), gpt_model_kwargs)
     print("Done")
 
     test_react_agent_use_examples(ModelClientType.GROQ(), llama3_model_kwargs)
+
+
+
+
+# test async
+
+import asyncio
+import time
+
+def is_running_in_event_loop() -> bool:
+    try:
+        loop = asyncio.get_running_loop()
+        if loop.is_running():
+            return True
+        else:
+            return False
+    except RuntimeError:
+        return False
+    
+def sync_func():
+    time.sleep(1)
+    print("Sync function")
+
+
+def execute():
+    if is_running_in_event_loop():
+        print("Running in event loop")
+        try:
+            result = asyncio.to_thread(sync_func)
+            print("Result", result)
+        except RuntimeError:
+            print("Runtime error")
+            sync_func()
+    else:
+        sync_func()
+
+
+
+
+execute()
+

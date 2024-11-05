@@ -18,13 +18,8 @@ import re
 import logging
 import backoff
 
-# optional import
-from adalflow.utils.lazy_import import safe_import, OptionalPackages
 
-
-openai = safe_import(OptionalPackages.OPENAI.value[0], OptionalPackages.OPENAI.value[1])
-
-from openai import OpenAI, AsyncOpenAI, Stream
+from openai import Stream, AzureOpenAI, AsyncAzureOpenAI
 from openai import (
     APITimeoutError,
     InternalServerError,
@@ -57,10 +52,6 @@ def get_first_message_content(completion: ChatCompletion) -> str:
     r"""When we only need the content of the first message.
     It is the default parser for chat completion."""
     return completion.choices[0].message.content
-
-
-# def _get_chat_completion_usage(completion: ChatCompletion) -> OpenAICompletionUsage:
-#     return completion.usage
 
 
 def parse_stream_response(completion: ChatCompletionChunk) -> str:
@@ -142,28 +133,36 @@ class OpenAIClient(ModelClient):
         self._input_type = input_type
 
     def init_sync_client(self):
-        api_key = self._api_key or os.getenv("OPENAI_API_KEY")
+        api_key = self._api_key or os.getenv("AZURE_OPENAI_API_KEY")
+        endpoint = os.getenv("AZURE_OPENAI_ENDPOINT")
+        api_version = os.getenv("AZURE_OPENAI_API_VERSION", "2024-02-01")
+        
         if not api_key:
-            raise ValueError("Environment variable OPENAI_API_KEY must be set")
-        return OpenAI(api_key=api_key)
+            raise ValueError("Environment variable AZURE_OPENAI_API_KEY must be set")
+        if not endpoint:
+            raise ValueError("Environment variable AZURE_OPENAI_ENDPOINT must be set")
+        
+        return AzureOpenAI(
+            api_key=api_key,
+            api_version=api_version,
+            azure_endpoint=endpoint
+        )
 
     def init_async_client(self):
-        api_key = self._api_key or os.getenv("OPENAI_API_KEY")
+        api_key = self._api_key or os.getenv("AZURE_OPENAI_API_KEY")
+        endpoint = os.getenv("AZURE_OPENAI_ENDPOINT")
+        api_version = os.getenv("AZURE_OPENAI_API_VERSION", "2024-02-01")
+        
         if not api_key:
-            raise ValueError("Environment variable OPENAI_API_KEY must be set")
-        return AsyncOpenAI(api_key=api_key)
-
-    # def _parse_chat_completion(self, completion: ChatCompletion) -> "GeneratorOutput":
-    #     # TODO: raw output it is better to save the whole completion as a source of truth instead of just the message
-    #     try:
-    #         data = self.chat_completion_parser(completion)
-    #         usage = self.track_completion_usage(completion)
-    #         return GeneratorOutput(
-    #             data=data, error=None, raw_response=str(data), usage=usage
-    #         )
-    #     except Exception as e:
-    #         log.error(f"Error parsing the completion: {e}")
-    #         return GeneratorOutput(data=None, error=str(e), raw_response=completion)
+            raise ValueError("Environment variable AZURE_OPENAI_API_KEY must be set")
+        if not endpoint:
+            raise ValueError("Environment variable AZURE_OPENAI_ENDPOINT must be set")
+        
+        return AsyncAzureOpenAI(
+            api_key=api_key,
+            api_version=api_version,
+            azure_endpoint=endpoint
+        )
 
     def parse_chat_completion(
         self,
